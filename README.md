@@ -12,6 +12,36 @@ Wenqi Cui
 Sri Krishnamurthy
 
 --- 
+## Table of Content
+
+- [Topic Description](#topic-description)
+- [Data Sources](#data-sources)
+- [Pipeline Design](#pipeline-design)
+- [Data Collection](#data-collection)
+  + [What is TFRecord](#what-is-tfrecord)
+  + [How to handle TFRecord?](#how-to-handle-tfrecord-)
+  + [Label Filter](#label-filter)
+- [Data Preprocessing](#data-preprocessing)
+- [The Sound File: WAV](#the-sound-file--wav)
+  + [Load a WAV file](#load-a-wav-file)
+  + [Waveform](#waveform)
+  + [Spectrogram](#spectrogram)
+- [Classifiers Training](#classifiers-training)
+  + [CNN(Convolutional Neural Network)](#cnn-convolutional-neural-network-)
+  + [Ensemble](#Ensembel-)
+  + [Optimization](#optimization)
+  + [Evaluation](#evaluation)
+- [New-coming WAV File Separation](#new-coming-wav-file-separation)
+  + [Slicing](#slicing)
+  + [Embedding](#embedding)
+  + [Feeding to the Model](#feeding-to-the-model)
+- [Future Steps](#future-steps)
+  + [YouTube Data Collection](#youtube-data-collection)
+  + [Silence Detection](#silence-detection)
+- [References](#references)
+
+
+
 ## Topic Description
 
 In Gender-based Vocal Recognition, we will design a classifier which is used to recognize the gender of a speaker from a given speech audio file(WAV format), in other words, to classify audio files to genders(male and female).
