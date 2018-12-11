@@ -43,36 +43,37 @@ The second part is `.wav Separation and Classification`. This part is for classf
 ## Data Collection
 
 Google Research offers the AudioSet dataset for download in two formats:
-Text (CSV) files describing, for each segment, the YouTube video ID, start time, end time, and one or more labels.
-128-dimensional audio features extracted at 1Hz. The audio features were extracted using a VGG-inspired acoustic model described in Hershey et. al., trained on a preliminary version of YouTube-8M. The features were PCA-ed and quantized to be compatible with the audio features provided with YouTube-8M. They are stored as TensorFlow Record files. The model used to generate the features is available in the TensorFlow models GitHub repository (see below for more details).
+1. **Text (CSV) files** describing, for each segment, the YouTube video ID, start time, end time, and one or more labels.
+2. **128-dimensional audio features** extracted at 1Hz. The audio features were extracted using a VGG-inspired acoustic model described in Hershey et. al., trained on a preliminary version of YouTube-8M. The features were PCA-ed and quantized to be compatible with the audio features provided with YouTube-8M. They are stored as TensorFlow Record files. 
 
-We will use the extracted features dataset. The total size of the features is 2.4 gigabytes. They are stored in 12,228 TensorFlow record files, sharded by the first two characters of the YouTube video ID, and packaged as a tar.gz file. The labels are stored as integer indices. They are mapped to sound classes via class_labels_indices.csv. 
+To use the extracted features dataset, both of 1 and 2 need to be downloaded. 
 
-The first line defines the column names:
+#### 128-dimensional audio features
+They are stored in 12,228 **TensorFlow record files**, shared by the first two characters of the YouTube video ID, and packaged as a tar.gz file. There are two ways provided by Google to download the features dataset(2):
+- Manually download the tar.gz file
+- Use gsutil rsync, with commands- 
 
-`index`, `mid`, `display_name`
+The labels are stored as integer indices. They are mapped to sound classes via `class_labels_indices.csv`. 
 
 
-Subsequent lines describe the mapping for each class. For example: 
+#### Text (CSV) files
+In the CSV file, 
 
-`0`, `/m/09x0r`, `"Speech"`
+The first line defines the column names. Subsequent lines describe the mapping for each class. For example: 
+
+|index |mid      |display_name  |
+| ---- | ------- | ------------ |
+|0     |/m/09x0r |"Speech"      |
+
+
 
 This means the index 0 indicates the label `“Speech”`.
 
-There are two ways provided by Google  to download the features dataset:
-- Manually download the tar.gz file
-- Use gsutil rsync, with commands
 
 
-## The Sound File: wav
-### Load a wav file
-### Frames and Sampling Rate
-### Waveform 
-### Spectrogram
-#### What is Spectrograms?
-A spectrogram is a visual representation of the spectrum of frequencies of sound or other signal as they vary with time. 
-#### Why spectrograms?
-Spectograms of sounds turn out to be quite useful for training 2d convolutional networks. 
+The benefits of choosing TFRecord to store features is explained by Thomas Gamauf on [here](<https://medium.com/mostly-ai/tensorflow-records-what-they-are-and-how-to-use-them-c46bc4bbb564>).
+
+
 
 ## Data Preprocessing
 
@@ -85,7 +86,103 @@ A SequenceExample is an Example representing one or more sequences and some cont
 
 All the feature information is extracted and represented already as embeddings by a pre-trained neural network model as feature extractor.
 
-The benefits of choosing TFRecord to store features is explained by Thomas Gamauf at [here](<https://medium.com/mostly-ai/tensorflow-records-what-they-are-and-how-to-use-them-c46bc4bbb564>).
+
+## The Sound File: WAV
+>Waveform Audio File Format (WAVE, or more commonly known as WAV due to its filename extension; is a Microsoft and IBM audio file format standard for storing an audio bitstream on PCs. For more [details](<https://en.wikipedia.org/wiki/WAV>)
+
+Usually, we care about two variables when loading a wav file. They are:
+
+- **Frame**: An audio frame, or sample, contains amplitude (loudness) information at that particular point in time. To produce sound, tens of thousands of frames are played in sequence to produce frequencies.
+- **Sampling Rate**: In the case of our audio data which is in CD quality audio, there are around 44,100 frames/samples per second, which means the sampling rate is 44.1kHz. This number is widely used today. 
+
+By using `frames` and `sampling_rate`, we are able to calculate the duration of a wav file by simply taking `duration` = `frames` / `sampling_rate`.
+
+Our project is taking 16-bits audio. This means each of those frames contains 16-bits of resolution, allowing for fairly precise representations of the sound levels. Also, because CD audio is stereo, there is actually twice as much information, 16-bits for the left channel, 16-bits for the right.
+
+When you use the sound module in python to get a frame, it will be returned as a series of hexadecimal characters:
+
+- Two characters for 16-bit mono.
+- Four characters for 16-bit stereo.
+
+We can use the python wave module's functions to check the bit depth and number of channels to prevent comparing mismatched quality settings.
+
+
+### Load a WAV file
+There are several python packages allow you to load a WAV file.
+#### Using wave library
+```python
+import wave
+wav = wave.open(fname)
+
+frames = getnframes()
+sampling_rate = getframerate()
+
+duration = wav.getnframes()/wav.getframerate()
+
+print("Sampling (frame) rate = ", wav.getframerate())
+print("Total samples (frames) = ", wav.getnframes())
+print("Duration = ", duration)
+```
+Output
+```
+Sampling (frame) rate =  44100
+Total samples (frames) =  500224
+Duration =  11.34294784580499
+```
+
+#### Using scipy
+```python
+from scipy.io import wavfile
+rate, data = wavfile.read(fname)
+print("Sampling (frame) rate = ", rate)
+print("Total samples (frames) = ", data.shape)
+print(data)
+```
+Output
+```
+Sampling (frame) rate =  44100
+Total samples (frames) =  (500224, 2)
+[[-5 -3]
+ [ 2 -7]
+ [-6 -6]
+ ...
+ [28 25]
+ [26 25]
+ [29 22]]
+```
+### Waveform
+To visualize an audio data, we can plot its waveform.
+```python
+import matplotlib.pyplot as plt
+plt.plot(data, '-', )
+```
+Output
+
+![waveform1](img/waveform1.png)
+
+Let's zoom in on first 50000 frames
+```python
+plt.figure(figsize=(16, 4))
+plt.plot(data[:50000], '.'); plt.plot(data[:50000], '-')
+```
+Output
+
+![waveform2](img/waveform2.png)
+
+### Spectrogram
+#### What is Spectrograms?
+A spectrogram is a visual representation of the spectrum of frequencies of sound or other signal as they vary with time. 
+#### Why use spectrograms?
+Spectrograms of sounds turn out to be quite useful for training 2d convolutional networks. The feature extractor provided by Google Research also need to convert input data from audio waveform to mel spectrogram features.
+
+#### Plot Spectrogram
+To plot a spectrogram, we can use `pyplot`
+```python
+plt.specgram(data[:,0], Fs=sample_rate, xextent=(0,30))
+plt.show()
+```
+![spectrogram](img/spectrogram.png)
+
 
 ## Classifiers Training
 The main approach for the classifiers training will be neural-network-based. Typical neural network types will include CNN(Convolutional Neural Network), RNN(Recurrent Neural Network). Certain customization will be taken if necessary. 
@@ -122,8 +219,11 @@ For future data which needs to be predicted, we assume the audio file is in the 
 Written in a SequenceExample to a TFRecord file (using the same format as the embedding features released in AudioSet)
 
 ### Slicing
+
 ### Embedding
+
 ### Feeding to the Model
+
 
 ## Future Steps
 ### YouTube Data Collection 
@@ -132,12 +232,20 @@ Written in a SequenceExample to a TFRecord file (using the same format as the em
 --- 
 ## References
 [1] Gemmeke, Jort F., et al. “Audio Set: An Ontology and Human-Labeled Dataset for Audio Events.” 2017 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP), 2017, doi:10.1109/icassp.2017.7952261.
+
 [2] Hershey, Shawn, et al. “CNN Architectures for Large-Scale Audio Classification.” 2017 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP), 2017, doi:10.1109/icassp.2017.7952132.
+
 [3] Ephrat, Ariel, et al. “Looking to Listen at the Cocktail Party.” ACM Transactions on Graphics, vol. 37, no. 4, 2018, pp. 1–11., doi:10.1145/3197517.3201357.
+
 [4] Google. “Google/Youtube-8m.” GitHub, 5 Nov. 2018, github.com/google/youtube-8m.
 DTaoo. “DTaoo/VGGish.” GitHub, 30 Nov. 2017, github.com/DTaoo/VGGish.
+
 [5] “Looking to Listen: Audio-Visual Speech Separation.” Google AI Blog, 11 Apr. 2018, ai.googleblog.com/2018/04/looking-to-listen-audio-visual-speech.html.
+
 [6] Acapella Extraction with ConvNets, madebyoll.in/posts/cnn_acapella_extraction/.
+
 [7] AIFF / AIFC Sound File Specifications, www-mmsp.ece.mcgill.ca/Documents/AudioFormats/.
+
 [8] Rogerdettloff. “Rogerdettloff/speech_seg_sep.” GitHub, 28 Sept. 2017, github.com/rogerdettloff/speech_seg_sep.
+
 [9] Gamauf, Thomas. “Tensorflow Records? What They Are and How to Use Them.” Medium.com, Medium, 20 Mar. 2018, medium.com/mostly-ai/tensorflow-records-what-they-are-and-how-to-use-them-c46bc4bbb564.
