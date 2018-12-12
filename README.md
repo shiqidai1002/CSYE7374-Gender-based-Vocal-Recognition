@@ -1,4 +1,4 @@
-﻿![brand](img/brand.jpg)
+![brand](img/brand.jpg)
 # Gender-based Vocal Recognition
 > Final Project of CSYE7374
 --- 
@@ -44,11 +44,11 @@ Sri Krishnamurthy
 
 ## Topic Description
 
-In Gender-based Vocal Recognition, we will design a classifier which is used to recognize the gender of a speaker from a given speech audio file(WAV format), in other words, to classify audio files to genders(male and female).
+In Gender-based Vocal Recognition, we designed classifiers which are used to recognize the gender of a speaker from a given speech audio file(WAV format), in other words, to classify audio files to genders(male and female).
 
-The data source is AudioSet provided by Google Research. It is a large scale audio dataset collected from YouTube videos. We will build machine learning models with TensorFlow,  trying some wildly used neural networks such as CNN, RNN. Different models for the model evaluation will be taken to obtain the best model. Afterward, our product will be able to process the newly coming WAV files, automatically applying feature engineering and generating training examples in memory-friendly data format. Finally, use our pre-trained neural network model to label it for future research usage.
+The data source is AudioSet provided by Google Research. It is a large scale audio dataset collected from YouTube videos. We will build machine learning models with TensorFlow,  trying some wildly used neural networks such as CNN, RNN. Different models for the model evaluation are taken to obtain the best model. Afterward, our product can process the newly coming WAV files, automatically applying feature engineering and generating training examples in memory-friendly data format. Finally, use our pre-trained neural network model to label it for future research usage.
 
-Achievement of our project could be very valuable on video/audio labeling, and it will help to generate more data for further study. For example, building a separator to separate a conversation audio file into two part according to different speakers. Combined with IoT technology which becomes more and more popular these days, our project is helpful in empowering “smart home”. For example, virtual assistants, such as Siri or Alexa, can use our product to validate if the voice of a certain user has access. 
+Achievement of our project could be precious on video/audio labeling, and it helps to generate more data for further study. For example, building a separator to separate an audio conversation file into two part according to different speakers. Combined with IoT technology which becomes more and more popular these days, our project is helpful in empowering “smart home.” For example, virtual assistants, such as Siri or Alexa, can use our product to validate if the voice of a particular user has access. 
 
 ## Data Sources
 > AudioSet is provided by Google Research. It consists of an expanding ontology of 632 audio event classes and a collection of 2,084,320 human-labeled 10-second sound clips drawn from YouTube videos.
@@ -58,27 +58,27 @@ We used 3 parts of data from AudioSet. They are:
   2. Female speech, woman speaking  [link](https://research.google.com/audioset/ontology/female_speech_woman_speaking_1.html) 
   3. Child speech, kid speaking  [link](https://research.google.com/audioset/ontology/child_speech_kid_speaking_1.html)
  
-In which, 1, 2, and 3 will be used to train classifier(s) that recognize different types of human voice. 
+In which, 1, 2, and 3 are used to train classifier(s) that recognize different types of human voice. 
 
 ## Pipeline Design
 
-There two main parts in our project. 
+There two main parts of our project. 
 
-First is `Classifier Training`. This part works as our core. It uses AudioSet data to train classifiers which will be used by the next part. 
+First is `Classifier Training`. This part works as our core. It uses AudioSet data to train classifiers which are used by the next part. 
 
-The second part is `.wav Separation and Classification`. This part is for classfying and separation on future sound file. It will first apply preprocessing and feature engineering, then use the our classifier to predict, finally using our scoring criteria to mark the original wav file.
+The second part is `.wav Separation and Classification`. This part is for classifying and separation on a future sound file. It first applies preprocessing and feature engineering, then use our classifier to predict, finally using our scoring criteria to mark the original wav file.
 ![CSYE7374](img/CSYE7374.png)
 
 ## Data Collection
 
 Google Research offers the AudioSet dataset for download in two formats:
 1. **Text (CSV) files** describing, for each segment, the YouTube video ID, start time, end time, and one or more labels.
-2. **128-dimensional audio features** extracted at 1Hz. The audio features were extracted using a VGG-inspired acoustic model described in Hershey et. al., trained on a preliminary version of YouTube-8M. The features were PCA-ed and quantized to be compatible with the audio features provided with YouTube-8M. They are stored as TensorFlow Record files. 
+2. **128-dimensional audio features** extracted at 1Hz. The audio features were extracted using a VGG-inspired acoustic model described in Hershey et al., trained on a preliminary version of YouTube-8M. The features were PCA-ed and quantized to be compatible with the audio features provided with YouTube-8M. They are stored as TensorFlow Record files. 
 
 To use the extracted features dataset, both of 1 and 2 need to be downloaded. 
 
 #### 128-dimensional audio features
-They are stored in 12,228 **TensorFlow record files**, shared by the first two characters of the YouTube video ID, and packaged as a tar.gz file. There are two ways provided by Google to download the features dataset(2):
+They have been stored in 12,228 **TensorFlow record files**, shared by the first two characters of the YouTube video ID, and packaged as a tar.gz file. There are two ways provided by Google to download the features dataset(2):
 - Manually download the tar.gz file
 - Use gsutil rsync, with commands- 
 
@@ -105,12 +105,12 @@ A SequenceExample is an Example representing one or more sequences and some cont
 
 All the feature information provided in AudioSet is extracted and represented already as embeddings by a pre-trained neural network model as feature extractor.
 
-So the main point left to us is how to retrieve those embeddings  from TFRecord files.
+So the main point left to us is how to retrieve those embeddings from TFRecord files.
 
 #### What is TFRecord
 TFRecord is a **binary** storage file format introduced by TensorFlow. The benefits of choosing TFRecord to store features is explained by Thomas Gamauf on [here](<https://medium.com/mostly-ai/TensorFlow-records-what-they-are-and-how-to-use-them-c46bc4bbb564>).
 
-One TFRecord may contain the embeddings of several datapoints in severval objects of `tensorflow.SequenceExample`. 
+One TFRecord may contain the embeddings of several data points in several objects of `tensorflow.SequenceExample`. 
 
 According to [Download - AudioSet](<https://research.google.com/audioset/download.html>), a typical `tensorflow.SequenceExample` proto is reproduced here in text format:
 ```
@@ -168,15 +168,15 @@ feature_lists: {
 
 }
 ```
-From above, the  `feature_lists` contains embeddings data as `bytes_list` which is exactly what we want, the 128 dimensional embedded features.
+From above, the  `feature_lists` contains embeddings data as `bytes_list` which is precisely what we want, the 128-dimensional embedded features.
 
 #### Label Filter
 When read in embedded features from TFRecord, due to the huge size of data and time consumption of loading data, we want to load only those samples with labels that satisfying our requirements to our system.
 
-In out project, we only want to use male, female, and child audio data. However, the downloaded TFRecords is the whole AudioSet. Thus, we need to create a criteria which plays as a query to help us retrieve only data in the classes we want. 
+In our project, we only want to use male, female, and child audio data. However, the downloaded TFRecords is the whole AudioSet. Thus, we need to create a criterion which plays as a query to help us retrieve only data in the classes we want. 
 
-This comes to our `label_criteria` which contains two list, one for the classes we want, another for the class(es) we don't want.
- >Note: In AudioSet, each 10s labeled example may have several labels. Not all of those labels are manually generated. Some of them generated by the title of video, others may  be generated by image detection and classification, and so on. Thus, not all the labels given are correct. For example, we found there are some samples labeled as "man speaking" along with "animal" are actually male lions' roar. This is the reason we added `not_use` into our criteria.
+This comes to our `label_criteria` which contains two lists, one for the classes we want, another for the class(es) we don't want.
+ >Note: In AudioSet, each 10s labeled example may have several labels. Not all of those labels are manually generated. Some of them generated by the title of the video, others may be generated by image detection and classification, and so on. Thus, not all the labels given are correct. For example, we found there are some samples labeled as "man speaking" along with "animal" are male lions' roar. This is the reason we added `not_use` into our criteria.
 
 ```python
 use=[male,female,child]
@@ -230,9 +230,9 @@ Usually, we care about two variables when loading a wav file. They are:
 
 By using `frames` and `sampling_rate`, we are able to calculate the duration of a wav file by simply taking `duration` = `frames` / `sampling_rate`.
 
-Our project is taking 16-bits audio. This means each of those frames contains 16-bits of resolution, allowing for fairly precise representations of the sound levels. Also, because CD audio is stereo, there is actually twice as much information, 16-bits for the left channel, 16-bits for the right.
+Our project is taking 16-bits audio, which means each of those frames contains 16-bits of resolution, allowing for reasonably precise representations of the sound levels. Also, because CD audio is stereo, there is twice as much information, 16-bits for the left channel, 16-bits for the right.
 
-When you use the sound module in python to get a frame, it will be returned as a series of hexadecimal characters:
+When you use the sound module in python to get a frame, it is returned as a series of hexadecimal characters:
 
 - Two characters for 16-bit mono.
 - Four characters for 16-bit stereo.
@@ -241,7 +241,7 @@ We can use the python wave module's functions to check the bit depth and number 
 
 
 ### Load a WAV file
-There are several python packages allow you to load a WAV file. In Jupyter Notebook, we can also add a player to listen the WAV file.
+There are several python packages allow you to load a WAV file. In Jupyter Notebook, we can also add a player to listen to the WAV file.
 ```python
 import IPython.display as ipd
 fname = './data/'  + '364971__balloonhead__welcome-to-the-bayou.wav'
@@ -313,7 +313,7 @@ Output
 
 ### Spectrogram
 #### What is Spectrograms?
-A spectrogram is a visual representation of the spectrum of frequencies of sound or other signal as they vary with time. 
+A spectrogram is a visual representation of the spectrum of frequencies of sound or other signals as they vary with time. 
 #### Why use spectrograms?
 Spectrograms of sounds turn out to be quite useful for training 2d convolutional networks. The feature extractor provided by Google Research also need to convert input data from audio waveform to mel spectrogram features.
 
@@ -330,13 +330,13 @@ plt.show()
 
 
 ## Classifiers Training
-The main approach for the classifiers training will be neural-network-based. Typical neural network types will include CNN(Convolutional Neural Network), RNN(Recurrent Neural Network). Certain customization will be taken if necessary. 
+The primary approach for the classifiers training is neural-network-based. Typical neural network types include CNN(Convolutional Neural Network), RNN(Recurrent Neural Network). Specific customization is taken if necessary. 
 
 ### CNN(Convolutional Neural Network)
-Typically, CNN is used on image/audio data. It plays a vital role in cognitive computing like image/voice recognition. 
+Typically, CNNs are used on image/audio data. It plays a vital role in cognitive computing like image/voice recognition. 
 
 #### VGG-ish Architecture
-The reason we choose to use a VGG-ish architecture is mainly because it is famous.
+The reason we choose to use a VGG-ish architecture is that it is famous.
 
 
 ### LSTM(Long Short-Term Memory Neural Network)
@@ -349,14 +349,14 @@ We would compare different optimizers including SGD, SGD with momentum, Adam, Rm
 
 #### Loss Function and Metrics
 Our task is a three-class classification(man, woman, and child). Because of the usage of artificial neural networks, we would choose categorical cross-entropy as our loss function. 
-For metrics, confusion-matrix-related metrics will be taken. This will include accuracy, recall, precision, and categorical accuracy.
+For metrics, confusion-matrix-related metrics are taken. This will include accuracy, recall, precision, and categorical accuracy.
 
 #### Testing and Validation
 Based on the scale of the provided data(17,716 man speaking, 8,513 woman speaking, 11,816 child speaking), we would choose hold-out validation.
 
 
 ## New-coming WAV File Separation
-For future data which needs to be predicted, we assume the audio file is in the type of WAV. For WAV files, we would apply slicing to split the audio into several slices which can meet the input shape of our pre-trained model and use the same strategy to do the feature engineering, extracting features. This process will follow the steps below, a WAV file is: 
+For future data which needs to be predicted, we assume the audio file is in the type of WAV. For WAV files, we would apply slicing to split the audio into several slices which can meet the input shape of our pre-trained model and use the same strategy to do the feature engineering, extracting features. This process follows the steps below, a WAV file is: 
 - read in with `wavfile` provided by `Scipy.io`
 - slice into several pieces
 - converted into spectrogram examples
@@ -373,27 +373,27 @@ For future data which needs to be predicted, we assume the audio file is in the 
 ### Slicing
 There are two reasons that we need to slice new-coming WAV files:
 1. To make sure the input data that is going to feed into our model has a uniformed shape, which means new-coming audio files with any lengths larger than the size of slicing window would be predictable for our model.
-2. To reach our goal--audio separation, we would like to predict on every period of an audio file. Then based on the predictions, we can give recommendation for the separation.
+2. To reach our goal--audio separation, we would like to predict every period of an audio file. Then based on the predictions, we can give a recommendation for the separation.
 
-To slice an audio file(WAV), we need to firstly calculate its duration by extracting the data frames and sampling rate.
+To slice an audio file(WAV), we need to first calculate its duration by extracting the data frames and sampling rate.
 ```python
 from scipy.io import wavfile
 
 rate, data = wavfile.read(fname)
 duration = len(data)/rate
 ```
-Then set a window duration, and based on that, calculate window size as well. In our project, we set the window duration as 10, which means we would predict on every 10 seconds. 
+Then set a window duration, and based on that, calculate window size as well. In our project, we set the window duration as 10, which means we would predict every 10 seconds. 
 ```python
 sample_rate = rate #44,100 (44.1kHZ)
 window_duration = 10
 window_size = int(window_duration * sample_rate)
 ```
-Once window duration get set, we can set a step duration and calculate the corresponding step size. We set the step duration as 1/10 of window duration, which is 1 sceond. 
+Once window duration gets set, we can set a step duration and calculate the corresponding step size. We set the step duration as 1/10 of window duration, which is 1 second. 
 ```python
 step_duration = window_duration / 10  # 1s
 step_size = int(step_duration * sample_rate)
 ```
-This means the window will move 1 second by 1 second. It works like the kernel in CNN, but the difference is that our window do not calculate. It is just used to resampling. 
+This means the window moves 1 second by 1 second. It works like the kernel in CNN, but the difference is that our window does not calculate. It is just used to resampling. 
 
 Now we can call the slice method to split.
 ```python
@@ -414,13 +414,13 @@ def slice(signal, window_size, step_size):
 ```
 
 ### Embedding
-After slicing, we would get several pieces of waveform. These waveforms is going to be our input samples waiting for prediction. Before that, embedding is necessary. There are three reasons:
-1. In audio/sound processing, waveform does not represent the data well, in order to feed the data into neural networks. Normally, researchers would transform waveform to spectrogram which is better for neural network to learn.
-2. However, both waveform and spectrogram contain too many information. It will be super expensive if waveform/spectrogram is directly fed into neural networks. Thus, further feature engineering is required. Feature embedding is one of them. 
-3. Our model is trained on sample in embeddings provided by Google research. Those embeddings are generated based on a pre-trained VGG-ish neural network model with YouTube 8M audio data. Thus, our classifier(s) only accepts input with the same size as the provided embeddings and needs the value of embeddings is generated by the same method.
+After slicing, we would get several pieces of waveform. These waveforms are going to be our input samples waiting for prediction. Before that, embedding is necessary. There are three reasons:
+1. In audio/sound processing, waveform does not represent the data well, to feed the data into neural networks. Normally, researchers would transform waveform to spectrogram which is better for the neural network to learn.
+2. However, both waveform and spectrogram contain too many information. It is super expensive if waveform/spectrogram is directly fed into neural networks. Thus, further feature engineering is required. Feature embedding is one of them. 
+3. Our model is trained on samples in embeddings provided by Google research. Those embeddings are generated based on a pre-trained VGG-ish neural network model with YouTube 8M audio data. Thus, our classifier(s) only accepts input with the same size as the provided embeddings and needs the value of embeddings is generated by the same method.
 
 Because of the three points above, we are required to use the same embedding strategy. Fortunately, Google Research has released a version of their VGG-ish model and weights to let researchers use their embeddings. 
->Note: Google Research pointed out that the released version of embeddings is a little bit different from the version which is used to embed AudioSet data. This may cause some difficulties to achieve the same performance on the prediction of new-coming audio data.
+>Note: Google Research pointed out that the released version of embeddings is a little bit different from the version which is used to embed AudioSet data. This difference may cause some difficulties to achieve the same performance on the prediction of new-coming audio data.
 
 To use the VGG-ish model as feature extractor, we can use the given API as below:
 ```python
@@ -449,13 +449,13 @@ return postprocessed_batch
 ```
 
 ### Feeding to the Model
-Before feed data into model, some conversions and normalizations need to be done.
+Before feed data into the model, some conversions and normalizations need to be done.
 ```python
 #convert to float and normalize
 embeded_windows = embeded_windows.astype('float32')
 embeded_windows /= 255
 ```
-Besides, the input shape may differ from models. We carefully reshaped them according to different input shape. In neural network, shape is a very important thing. You have to keep "shape" in mind in anytime!
+Besides, the input shape may differ from models. We carefully reshaped them according to different input shape. In neural networks, the shape is an essential thing. You have to keep "shape" in mind at any time!
 
 
 ## Future Steps
@@ -464,7 +464,7 @@ We have noticed that there is some way to fetch WAV data from YouTube by an API.
 [Fetch wav data from audioset](<https://github.com/unixpickle/audioset/tree/bddd5c7e5d6e8b6fb565943ec5c608c3a8c7f8e7>)
 
 ### Silence Detection 
-The audio quality of AudioSet is not very satisfying. A typical weakness is silence. For example, some samples labeled as child speaking may contain up to 1/3 silence/small noise, no kids' voice at all. This makes our model difficult to learn well. We've found some solution on this issue which is silence detection. It can be seen as another preprocessing on the input audio files, which is able to detect silence based on the energy of waveform. In the future, we've planed to add this feature into our system, making our audio separation system robuster.
+The audio quality of AudioSet is not very satisfying. A typical weakness is silence. For example, some samples labeled as child speaking may contain up to 1/3 silence/small noise, no kids' voice at all. This makes our model difficult to learn well. We've found some solution on this issue which is silence detection. It can be seen as another preprocessing on the input audio files, which can detect silence based on the energy of waveform. In the future, we've planned to add this feature to our system, making our audio separation system more robust.
 
 --- 
 ## References
