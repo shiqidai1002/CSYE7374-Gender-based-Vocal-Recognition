@@ -1,9 +1,9 @@
 ![brand](img/brand.jpg)
 # Gender-based Vocal Recognition
-> Final Project of CSYE7374
+> Final Project of CSYE7374 Cognitive Computing
 --- 
+![Project Report](img/Project%20Report.png)
 
-![pic1](img/pic1.png)
 
 #### Members:
 Shiqi Dai<br>
@@ -27,14 +27,18 @@ Sri Krishnamurthy
   + [Waveform](#waveform)
   + [Spectrogram](#spectrogram)
 - [Classifiers Training](#classifiers-training)
+  + [Input Tensor](#input-tensor)
   + [CNN(Convolutional Neural Network)](#cnn-convolutional-neural-network-)
-  + [Ensemble](#Ensembel-)
-  + [Optimization](#optimization)
+    * [Two-dimensional convolutional neural network](#two-dimensional-convolutional-neural-network)
+    * [One-dimensional convolutional neural network](#one-dimensional-convolutional-neural-network)
+  + [MLP(Mltilayer Perceptron)](#mlp-mltilayer-perceptron-)
   + [Evaluation](#evaluation)
+  + [Ensemble](#ensemble)
 - [New-coming WAV File Separation](#new-coming-wav-file-separation)
   + [Slicing](#slicing)
   + [Embedding](#embedding)
   + [Feeding to the Model](#feeding-to-the-model)
+  + [Output Separation](#output-separation)
 - [Future Steps](#future-steps)
   + [YouTube Data Collection](#youtube-data-collection)
   + [Silence Detection](#silence-detection)
@@ -332,28 +336,171 @@ plt.show()
 ## Classifiers Training
 The primary approach for the classifiers training is neural-network-based. Typical neural network types include CNN(Convolutional Neural Network), RNN(Recurrent Neural Network). Specific customization is taken if necessary. 
 
+### Input Tensor
+The input size for all models we used is uniformed, which is 10 * 128. The first dimension is time. There are ten seconds for each sample, and for each second, there are 128 dimensions of features. We made a few visualization of our samples.
+- Male speaking #1
+![male1](img/male1.png)
+
+- Male speaking #2
+![male2](img/male2.png)
+
+- Female speaking
+![female1](img/female1.png)
+
+- Child speaking
+![child1](img/child1.png)
+
+In those heat maps, the shades of color are from 0(white) to 255(black). The time is in the vertical dimension and 128 features are distributed in the horizontal dimension. 
+
+What we need to point out is the 128 features are not directly output of the pre-trained VGGish model. Instead, they are PCA-ed features. Thus every digit from the 128 features is independent. This is important because we used 2D convolutional neural network at the first place. Then we found the accuracy is not as expected. By knowing the independence of features, we decided to use 1D convolutional neural network and it turned out to be satisfying.
+
 ### CNN(Convolutional Neural Network)
 Typically, CNNs are used on image/audio data. It plays a vital role in cognitive computing like image/voice recognition. 
 
-#### VGG-ish Architecture
-The reason we choose to use a VGG-ish architecture is that it is famous.
+#### Two-dimensional convolutional neural network
+2D convolutional neural network is the first model we tried because we got inspired from the pre0trained VGGish embedding model. We implemented a simple VGG-resembling Conv2D model consisting of several VGG modules. A typical VGG module is:
+1. Conv2D layer with ReLu activation
+2. Batch normalization layer
+3. Max pooling layer
+4. Dropout layer
 
+We tried different combination of VGG modules and hyper parameters like neurons, dropout rate, etc.
 
-### LSTM(Long Short-Term Memory Neural Network)
-Long short-term memory (LSTM) units are units of a recurrent neural network (RNN). An RNN composed of LSTM units is often called an LSTM network.
+#### One-dimensional convolutional neural network
+As mentioned above, we decided to use 1D CNN is because our features do not have any relations in horizontal(128) dimension. But in the vertical dimension--time, the data should have some relations. A 1D conv model would allow us to get the high level feature from the time dimension of a sample input. This should give us better performance.
+```_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+conv1d_63 (Conv1D)           (None, 10, 64)            24640     
+_________________________________________________________________
+batch_normalization_175 (Bat (None, 10, 64)            256       
+_________________________________________________________________
+conv1d_64 (Conv1D)           (None, 10, 64)            12352     
+_________________________________________________________________
+batch_normalization_176 (Bat (None, 10, 64)            256       
+_________________________________________________________________
+max_pooling1d_35 (MaxPooling (None, 3, 64)             0         
+_________________________________________________________________
+dropout_143 (Dropout)        (None, 3, 64)             0         
+_________________________________________________________________
+conv1d_65 (Conv1D)           (None, 3, 128)            24704     
+_________________________________________________________________
+batch_normalization_177 (Bat (None, 3, 128)            512       
+_________________________________________________________________
+max_pooling1d_36 (MaxPooling (None, 1, 128)            0         
+_________________________________________________________________
+dropout_144 (Dropout)        (None, 1, 128)            0         
+_________________________________________________________________
+flatten_43 (Flatten)         (None, 128)               0         
+_________________________________________________________________
+dense_186 (Dense)            (None, 128)               16512     
+_________________________________________________________________
+batch_normalization_178 (Bat (None, 128)               512       
+_________________________________________________________________
+dropout_145 (Dropout)        (None, 128)               0         
+_________________________________________________________________
+dense_187 (Dense)            (None, 64)                8256      
+_________________________________________________________________
+batch_normalization_179 (Bat (None, 64)                256       
+_________________________________________________________________
+dropout_146 (Dropout)        (None, 64)                0         
+_________________________________________________________________
+dense_188 (Dense)            (None, 32)                2080      
+_________________________________________________________________
+dense_189 (Dense)            (None, 3)                 99        
+=================================================================
+Total params: 90,435
+Trainable params: 89,539
+Non-trainable params: 896
+_________________________________________________________________
+```
+From the model summary above, please pay attention on the sceond dimension before `flatten_43`. By using 1D conv and max pooling, we can extract high-level features from time dimension.
 
-### Optimization
-We would compare different optimizers including SGD, SGD with momentum, Adam, RmsProp, etc.
+### MLP(Mltilayer Perceptron)
+After 1D conv model, we were curious if a simple MLP can give us good results. Here is the architecture we used in MLP:
+```
+Layer (type)                 Output Shape              Param #   
+=================================================================
+flatten_8 (Flatten)          (None, 1280)              0         
+_________________________________________________________________
+dense_39 (Dense)             (None, 1280)              1639680   
+_________________________________________________________________
+batch_normalization_46 (Batc (None, 1280)              5120      
+_________________________________________________________________
+dropout_37 (Dropout)         (None, 1280)              0         
+_________________________________________________________________
+dense_40 (Dense)             (None, 1280)              1639680   
+_________________________________________________________________
+batch_normalization_47 (Batc (None, 1280)              5120      
+_________________________________________________________________
+dropout_38 (Dropout)         (None, 1280)              0         
+_________________________________________________________________
+dense_41 (Dense)             (None, 320)               409920    
+_________________________________________________________________
+batch_normalization_48 (Batc (None, 320)               1280      
+_________________________________________________________________
+dropout_39 (Dropout)         (None, 320)               0         
+_________________________________________________________________
+dense_42 (Dense)             (None, 40)                12840     
+_________________________________________________________________
+batch_normalization_49 (Batc (None, 40)                160       
+_________________________________________________________________
+dense_43 (Dense)             (None, 3)                 123       
+=================================================================
+Total params: 3,713,923
+Trainable params: 3,708,083
+Non-trainable params: 5,840
+_________________________________________________________________
+```
 
 ### Evaluation
 
 #### Loss Function and Metrics
-Our task is a three-class classification(man, woman, and child). Because of the usage of artificial neural networks, we would choose categorical cross-entropy as our loss function. 
-For metrics, confusion-matrix-related metrics are taken. This will include accuracy, recall, precision, and categorical accuracy.
+Our task is a three-class classification(man, woman, and child). Because of the usage of artificial neural networks, we chose categorical cross-entropy as our loss function. 
+For metrics, for the most of time, we cared about accuracy. For further analyzing, we used confusion matrix to see the performance of the predictions.
 
-#### Testing and Validation
-Based on the scale of the provided data(17,716 man speaking, 8,513 woman speaking, 11,816 child speaking), we would choose hold-out validation.
+#### Learning Curve
+In the models training process, it was easy to face overfitting problems. The variances between accuracies on training set and validation set are huge. Let see some learning curves during the training:
 
+- 2D CNN #1
+
+![2D CNN 1](img/2D%20CNN%201.png)
+
+- 2D CNN #2
+
+![2D CNN 2](img/2D%20CNN%202.png)
+
+- 1D CNN #1
+
+![1D CNN 1](img/1D%20CNN%201.png)
+
+- MLP #1
+
+![MLP1](img/MLP1.png)
+
+To solve this problem, we tried three different ways:
+1. Using dropout and special dropout
+2. Applying Batchnormalization
+3. Adding regularizers
+
+But the results did not get better. We think two factors may influence this. One is on us. Because it is time-consuming to read all TFRecords into our system, we only read 600+ samples and used them to train our model, aiming to use that amount of data to valid our thoughts. On the other hand, we noticed that the quality of labels and samples themselves is limited. Both of two could lead to the large variance problem. Next, we would try to load more data to train the model, and hope we can get better result.
+
+### Ensemble
+Because of the low (70+%) accuracies we got in models above. We decided to build an ensemble model to combine predictions current models made, hoping this ensemble can eliminate bias between models, take the best part of each base model and avoid the weakness. 
+
+The ensemble takes output from a one-dimensional CNN model and a simple MLP model, then  reshape(flatten) and feed them into a decision tree model to generate the final predictions.
+
+For our experiment, the ensemble works better than any individual model. Here is its confusion matrix: 
+```
+|20 | 0 | 1|
+|1  |25 | 2|
+|1  | 0 |77|
+```
+
+Accuracy:
+```
+0.9606299212598425
+```
 
 ## New-coming WAV File Separation
 For future data which needs to be predicted, we assume the audio file is in the type of WAV. For WAV files, we would apply slicing to split the audio into several slices which can meet the input shape of our pre-trained model and use the same strategy to do the feature engineering, extracting features. This process follows the steps below, a WAV file is: 
@@ -457,6 +604,48 @@ embeded_windows /= 255
 ```
 Besides, the input shape may differ from models. We carefully reshaped them according to different input shape. In neural networks, the shape is an essential thing. You have to keep "shape" in mind at any time!
 
+### Output Separation
+There is two types of output we generate for the separation. 
+
+The first one is for individual classifier prediction.
+![separation output](img/separation%20output.png)
+
+This way will calculate the average probabilities of each class for every second. The user can take the highest probability as the label of that second, but this format of output also gives choices to the user.
+
+The second one is for ensemble learning. The ensemble learning does not give probabilities as output. Thus we created an algorithm to generate the labels for each second. The idea of this algorithm is voting. Every second except the first and last will have 2 to n(the `window_size` ) predictions because of our slicing. We would let them vote and take the highest as its final prediction. You may have question what should we do when a second of audio get even votes. In this circmustance, we think audio data should have coherence, thus we would take the label of the second before it as its label. For your reference, here is the code:
+```python
+#Ensemble model
+model3 =joblib.load(model_path3)
+print('Ensemble model loaded')
+#hstack two predictions from base models
+x_ens=np.hstack((predictions1,predictions2))
+predictions3 = model3.predict(x_ens)
+print("Predictions 3: ")
+print(predictions3)
+
+m=len(predictions3)
+n=m+9
+pred= [[0]*3]* n
+pred=np.asarray(pred)   
+pp=[0]*n
+for i in range(m):
+    for j in range(10):
+        pred[i+j,predictions3[i]] += 1
+for i in range(n):
+    if (pred[i][0]>pred[i][1])and(pred[i][0]>pred[i][2]):
+        pp[i] = 0
+    else:
+        if (pred[i][1]>pred[i][2])and(pred[i][1]>pred[i][0]):
+            pp[i] = 1
+        else:
+            if (pred[i][2]>pred[i][1])and(pred[i][2]>pred[i][0]):
+                pp[i] = 2
+            else:
+                pp[i] =pp[i-1]
+print('Final Prediction: ')
+print(pp)
+```
+
 
 ## Future Steps
 ### YouTube Data Collection 
@@ -486,3 +675,14 @@ DTaoo. “DTaoo/VGGish.” GitHub, 30 Nov. 2017, github.com/DTaoo/VGGish.
 [8] Rogerdettloff. “Rogerdettloff/speech_seg_sep.” GitHub, 28 Sept. 2017, github.com/rogerdettloff/speech_seg_sep.
 
 [9] Gamauf, Thomas. “TensorFlow Records? What They Are and How to Use Them.” Medium.com, Medium, 20 Mar. 2018, medium.com/mostly-ai/TensorFlow-records-what-they-are-and-how-to-use-them-c46bc4bbb564.
+
+[10] “What Does a Audio Frame Contain?” Stack Overflow, stackoverflow.com/questions/3957025/what-does-a-audio-frame-contain.
+
+[11] “WAV.” Wikipedia, Wikimedia Foundation, 9 Dec. 2018, en.wikipedia.org/wiki/WAV.
+
+
+[12] 262588213843476. “Split WAV Files at Silence.” Gist, gist.github.com/vireshas/c1ec686bf3e639f53e735ae3d59ac12b.
+
+[13] RSNA Pneumonia Detection Challenge | Kaggle, www.kaggle.com/fizzbuzz/beginner-s-guide-to-audio-data/notebook.
+
+[14] Tensorflow. “Tensorflow/Models.” GitHub, 12 Nov. 2018, github.com/tensorflow/models/tree/master/research/audioset.
