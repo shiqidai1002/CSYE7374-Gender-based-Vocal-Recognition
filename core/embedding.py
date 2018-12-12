@@ -73,10 +73,10 @@ def embed(wavform_slice, rate):
   return postprocessed_batch
 
 def main(_):
-    model_path1 = '../VGG-ish_74_ex65.model'
-    model_path2 = '../VGG-ish_conv1-type1.model'
-    model_path3 = '../ensemble_decisionTree.model'
-    wav_file = '../data/351612__bectec__icantfindmydaughter.wav'
+    model_path1 = '../MLP_75.model'
+    model_path2 = '../Conv1D.model'
+    model_path3 = '../ensemble_decisionTree_2.model'
+    wav_file = '../data/364971__balloonhead__welcome-to-the-bayou.wav'
     sliced_windows, times, rate = preprocessing.load_and_sliced(wav_file)
     embeded_windows = []
     for wavform_slice in sliced_windows:
@@ -95,14 +95,10 @@ def main(_):
     model1 = keras.models.load_model(model_path1)
     print('Conv2D model loaded')
     
-    #reshape to (batch,10,128,1)
-    embeded_windows1 = embeded_windows.reshape(embeded_windows.shape[0],
-                                               embeded_windows.shape[1],
-                                               embeded_windows.shape[2],1)
     print('input shape: ')
-    print(embeded_windows1.shape)
+    print(embeded_windows.shape)
     #print(embeded_windows1[0])
-    predictions1 = model1.predict(embeded_windows1)
+    predictions1 = model1.predict(embeded_windows)
     print("Predictions 1 : ")
     print(predictions1)
     
