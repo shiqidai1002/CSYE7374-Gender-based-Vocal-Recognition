@@ -608,6 +608,7 @@ Besides, the input shape may differ from models. We carefully reshaped them acco
 There is two types of output we generate for the separation. 
 
 The first one is for individual classifier prediction.
+
 ![separation output](img/separation%20output.png)
 
 This way will calculate the average probabilities of each class for every second. The user can take the highest probability as the label of that second, but this format of output also gives choices to the user.
