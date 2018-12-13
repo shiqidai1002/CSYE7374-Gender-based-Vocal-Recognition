@@ -39,6 +39,12 @@ flags.DEFINE_string(
 
 FLAGS = flags.FLAGS
 
+def del_all_flags(FLAGS):
+    flags_dict = FLAGS._flags()    
+    keys_list = [keys for keys in flags_dict]    
+    for keys in keys_list:
+        FLAGS.__delattr__(keys)
+
 
 def embed(wavform_slice, rate):  
   norm_wavform_slice = preprocessing.normalize(wavform_slice)
@@ -76,7 +82,7 @@ def main(_):
     model_path1 = '../MLP_75.model'
     model_path2 = '../Conv1D.model'
     model_path3 = '../ensemble_decisionTree_2.model'
-    wav_file = '../data/364971__balloonhead__welcome-to-the-bayou.wav'
+    wav_file = '../data/000000__balloonhead__welcome-to-the-bayou.wav'
     sliced_windows, times, rate = preprocessing.load_and_sliced(wav_file)
     embeded_windows = []
     for wavform_slice in sliced_windows:
@@ -145,5 +151,6 @@ def main(_):
     print('Final Prediction: ')
     print(pp)
   
+    del_all_flags(tf.flags.FLAGS)
 if __name__ == "__main__":
   tf.app.run()
